@@ -8,7 +8,7 @@ import kotlin.math.roundToLong
 private val groupedFormat: NumberFormat = NumberFormat.getIntegerInstance(Locale.US)
 
 /** "$1,250" — rounded to whole units with grouping, matching the design's figures. */
-fun formatMoney(amount: Double): String = "$" + groupedFormat.format(amount.roundToLong())
+fun formatMoney(amount: Double): String = "৳" + groupedFormat.format(amount.roundToLong())
 
 /** Expense display with a leading minus, e.g. "-$540". */
 fun formatExpense(amount: Double): String = "-" + formatMoney(amount)

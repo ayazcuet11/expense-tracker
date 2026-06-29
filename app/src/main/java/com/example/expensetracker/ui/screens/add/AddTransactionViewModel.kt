@@ -22,7 +22,7 @@ data class AddUiState(
 ) {
     val amount: Double get() = amountText.toDoubleOrNull() ?: 0.0
     val canSave: Boolean get() = amount > 0.0
-    val displayAmount: String get() = "$" + (amountText.ifEmpty { "0" })
+    val displayAmount: String get() = "৳" + (amountText.ifEmpty { "0" })
     val categories: List<Category> get() = Category.entries
 }
 
