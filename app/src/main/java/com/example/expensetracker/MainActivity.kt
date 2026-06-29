@@ -8,6 +8,7 @@ import com.example.expensetracker.ui.navigation.ExpenseTrackerApp
 import com.example.expensetracker.ui.theme.ExpenseTrackerTheme
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
