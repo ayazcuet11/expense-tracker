@@ -24,6 +24,9 @@ val PillBorder = Color(0xFFE7E0D2)
 val DangerText = Color(0xFFC7503B)
 val DangerSurface = Color(0xFFFBEEEA)
 val PositiveText = Color(0xFF3E8E6A)
+val PositiveSurface = Color(0xFFE8F2EC)
+val Amber = Color(0xFFB58A3C)
+val AmberSurface = Color(0xFFF6EEDD)
 
 // Text on dark (ink) cards
 val OnInk = Color(0xFFFBF9F4)

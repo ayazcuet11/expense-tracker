@@ -2,6 +2,7 @@ package com.example.expensetracker.data.local
 
 import androidx.room.TypeConverter
 import com.example.expensetracker.data.model.Category
+import com.example.expensetracker.data.model.LoanDirection
 import com.example.expensetracker.data.model.TransactionType
 
 /** Persists enums as their stable name() string so reordering enum entries stays safe. */
@@ -17,4 +18,10 @@ class Converters {
 
     @TypeConverter
     fun toTransactionType(value: String): TransactionType = TransactionType.valueOf(value)
+
+    @TypeConverter
+    fun fromLoanDirection(value: LoanDirection): String = value.name
+
+    @TypeConverter
+    fun toLoanDirection(value: String): LoanDirection = LoanDirection.valueOf(value)
 }

@@ -8,6 +8,8 @@ object Routes {
     const val INSIGHTS = "insights"
     const val ADD = "add"
     const val ADD_WITH_ID = "add?id={id}"
+    const val LOANS = "loans"
+    const val ADD_LOAN = "addLoan"
 
     fun add(id: Long? = null) = if (id == null) "add" else "add?id=$id"
 

@@ -4,13 +4,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expensetracker.data.model.Category
+import com.example.expensetracker.data.model.LoanDirection
+import com.example.expensetracker.data.model.LoanStatus
 import com.example.expensetracker.data.repository.ExpenseRepository
 import com.example.expensetracker.ui.screens.common.DateRange
 import com.example.expensetracker.ui.screens.common.buildRangeReport
 import com.example.expensetracker.util.formatMoney
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 /** A "rising spend" coaching card. */
@@ -37,7 +39,18 @@ data class TrimItem(
     val sub: String
 )
 
+/** An overdue / due-soon loan surfaced as a reminder at the top of Insights. */
+data class LoanReminder(
+    val loanId: Long,
+    val person: String,
+    val initial: String,
+    val direction: LoanDirection,
+    val remaining: Double,
+    val status: LoanStatus
+)
+
 data class InsightsUiState(
+    val reminders: List<LoanReminder> = emptyList(),
     val adjust: List<AdjustTip> = emptyList(),
     val add: List<AddIdea> = emptyList(),
     val trim: List<TrimItem> = emptyList()
@@ -45,10 +58,27 @@ data class InsightsUiState(
 
 class InsightsViewModel(repository: ExpenseRepository) : ViewModel() {
 
-    val uiState: StateFlow<InsightsUiState> = repository.transactions
-        .map { transactions ->
-            val report = buildRangeReport(transactions, DateRange.THIS_MONTH, System.currentTimeMillis())
+    val uiState: StateFlow<InsightsUiState> =
+        combine(repository.transactions, repository.loans) { transactions, loans ->
+            val now = System.currentTimeMillis()
+            val report = buildRangeReport(transactions, DateRange.THIS_MONTH, now)
             val rising = report.rising
+
+            val reminders = loans
+                .map { it to it.status(now) }
+                .filter { (_, status) -> status == LoanStatus.OVERDUE || status == LoanStatus.DUE_SOON }
+                // Overdue first, then due-soon by nearest due date.
+                .sortedWith(compareBy({ it.second != LoanStatus.OVERDUE }, { it.first.dueDate ?: Long.MAX_VALUE }))
+                .map { (loan, status) ->
+                    LoanReminder(
+                        loanId = loan.id,
+                        person = loan.person,
+                        initial = loan.person.trim().firstOrNull()?.uppercase() ?: "?",
+                        direction = loan.direction,
+                        remaining = loan.remaining,
+                        status = status
+                    )
+                }
 
             val adjust = rising.take(3).map { m ->
                 AdjustTip(
@@ -70,7 +100,7 @@ class InsightsViewModel(repository: ExpenseRepository) : ViewModel() {
                 )
             }
 
-            InsightsUiState(adjust = adjust, add = staticAddIdeas, trim = trim)
+            InsightsUiState(reminders = reminders, adjust = adjust, add = staticAddIdeas, trim = trim)
         }
         .stateIn(
             scope = viewModelScope,

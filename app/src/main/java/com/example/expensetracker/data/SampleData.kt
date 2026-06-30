@@ -2,6 +2,8 @@ package com.example.expensetracker.data
 
 import com.example.expensetracker.data.model.Category
 import com.example.expensetracker.data.model.Expense
+import com.example.expensetracker.data.model.Loan
+import com.example.expensetracker.data.model.LoanDirection
 import com.example.expensetracker.data.model.TransactionType
 import java.util.Calendar
 import kotlin.math.roundToInt
@@ -84,6 +86,53 @@ object SampleData {
             }
         }
         return out
+    }
+
+    /**
+     * Demo loans covering each card state: a partially-paid borrow, a due-soon borrow, an overdue
+     * loan owed to the user, and a healthy/long-dated lent loan. Dates are relative to "now" so the
+     * overdue / due-soon badges always render.
+     */
+    fun seedLoans(nowMillis: Long = System.currentTimeMillis()): List<Loan> {
+        fun daysFromNow(days: Int): Long = nowMillis + days * 24L * 60 * 60 * 1000
+        return listOf(
+            Loan(
+                person = "Rahim",
+                direction = LoanDirection.BORROWED,
+                principal = 800.0,
+                paidAmount = 300.0,
+                borrowedDate = daysFromNow(-40),
+                dueDate = daysFromNow(20),
+                note = "Emergency car repair"
+            ),
+            Loan(
+                person = "Karim",
+                direction = LoanDirection.BORROWED,
+                principal = 450.0,
+                paidAmount = 0.0,
+                borrowedDate = daysFromNow(-25),
+                dueDate = daysFromNow(4),
+                note = "Short-term cash"
+            ),
+            Loan(
+                person = "Salma",
+                direction = LoanDirection.LENT,
+                principal = 600.0,
+                paidAmount = 150.0,
+                borrowedDate = daysFromNow(-60),
+                dueDate = daysFromNow(-3),
+                note = "Tuition help"
+            ),
+            Loan(
+                person = "Nadia",
+                direction = LoanDirection.LENT,
+                principal = 1000.0,
+                paidAmount = 400.0,
+                borrowedDate = daysFromNow(-30),
+                dueDate = daysFromNow(45),
+                note = "Business stock"
+            )
+        )
     }
 
     private fun dayCapped(day: Int, maxDay: Int) = day.coerceIn(1, maxDay)

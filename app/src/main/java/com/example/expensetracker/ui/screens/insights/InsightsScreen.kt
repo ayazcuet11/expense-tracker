@@ -31,11 +31,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.expensetracker.data.model.LoanDirection
 import com.example.expensetracker.ui.AppViewModelProvider
 import com.example.expensetracker.ui.components.CategoryBadge
 import com.example.expensetracker.ui.components.SectionCard
+import com.example.expensetracker.ui.screens.loans.directionColor
+import com.example.expensetracker.ui.screens.loans.style
 import com.example.expensetracker.ui.theme.Accent
 import com.example.expensetracker.ui.theme.DangerSurface
 import com.example.expensetracker.ui.theme.DangerText
@@ -46,11 +51,13 @@ import com.example.expensetracker.ui.theme.InkMuted
 import com.example.expensetracker.ui.theme.InkSoft
 import com.example.expensetracker.ui.theme.Outline
 import com.example.expensetracker.ui.theme.Surface as SurfaceColor
+import com.example.expensetracker.util.formatMoney
 
 private val Amber = Color(0xFFB58A3C)
 
 @Composable
 fun InsightsScreen(
+    onOpenLoans: () -> Unit,
     viewModel: InsightsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -69,6 +76,18 @@ fun InsightsScreen(
                     color = InkMuted,
                     modifier = Modifier.padding(top = 3.dp)
                 )
+            }
+        }
+
+        if (state.reminders.isNotEmpty()) {
+            item { SectionLabel("Loan reminders", Color(0xFF3D6FA8)) }
+            item {
+                SectionCard(cornerRadius = 22.dp, contentPadding = PaddingValues(horizontal = 17.dp)) {
+                    state.reminders.forEachIndexed { index, reminder ->
+                        ReminderRow(reminder, onClick = onOpenLoans)
+                        if (index != state.reminders.lastIndex) HorizontalDivider(color = Divider, thickness = 1.dp)
+                    }
+                }
             }
         }
 
@@ -171,6 +190,52 @@ fun InsightsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ReminderRow(reminder: LoanReminder, onClick: () -> Unit) {
+    val dirColor = directionColor(reminder.direction)
+    val statusStyle = reminder.status.style()
+    val dirLabel = if (reminder.direction == LoanDirection.BORROWED) "You owe" else "You're owed"
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(11.dp))
+                .background(dirColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(reminder.initial, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(reminder.person, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Ink)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                modifier = Modifier.padding(top = 3.dp)
+            ) {
+                Text(
+                    reminder.status.label,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = statusStyle.text,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(statusStyle.background)
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+                Text(dirLabel, style = MaterialTheme.typography.labelSmall, color = InkFaint)
+            }
+        }
+        Text(formatMoney(reminder.remaining), style = MaterialTheme.typography.titleSmall, color = dirColor)
     }
 }
 

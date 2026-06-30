@@ -3,6 +3,8 @@ package com.example.expensetracker.ui.screens.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expensetracker.data.model.Expense
+import com.example.expensetracker.data.model.LoanDirection
+import com.example.expensetracker.data.model.LoanStatus
 import com.example.expensetracker.data.repository.ExpenseRepository
 import com.example.expensetracker.ui.screens.common.CategoryStat
 import com.example.expensetracker.ui.screens.common.DateRange
@@ -27,7 +29,13 @@ data class HomeUiState(
     val rising: List<Movement> = emptyList(),
     val recent: List<Expense> = emptyList(),
     val ideasCount: Int = 0,
-    val isEmpty: Boolean = true
+    val isEmpty: Boolean = true,
+    val oweRemaining: Double = 0.0,
+    val lentRemaining: Double = 0.0,
+    val oweCount: Int = 0,
+    val lentCount: Int = 0,
+    val overdueCount: Int = 0,
+    val hasLoans: Boolean = false
 )
 
 class HomeViewModel(repository: ExpenseRepository) : ViewModel() {
@@ -35,10 +43,13 @@ class HomeViewModel(repository: ExpenseRepository) : ViewModel() {
     private val range = MutableStateFlow(DateRange.THIS_MONTH)
 
     val uiState: StateFlow<HomeUiState> =
-        combine(repository.transactions, range) { transactions, selected ->
-            val report = buildRangeReport(transactions, selected, System.currentTimeMillis())
+        combine(repository.transactions, range, repository.loans) { transactions, selected, loans ->
+            val now = System.currentTimeMillis()
+            val report = buildRangeReport(transactions, selected, now)
             val top = report.byCategory.take(3)
             val other = report.byCategory.drop(3).sumOf { it.amount }
+            val active = loans.filterNot { it.isSettled }
+            val (owe, lent) = active.partition { it.direction == LoanDirection.BORROWED }
             HomeUiState(
                 range = selected,
                 rangePill = report.window.pill,
@@ -53,7 +64,13 @@ class HomeViewModel(repository: ExpenseRepository) : ViewModel() {
                 recent = report.recent,
                 // Three "adjust" cards plus four "worth adding" ideas, matching the design CTA.
                 ideasCount = report.rising.take(3).size + 4,
-                isEmpty = report.isEmpty
+                isEmpty = report.isEmpty,
+                oweRemaining = owe.sumOf { it.remaining },
+                lentRemaining = lent.sumOf { it.remaining },
+                oweCount = owe.size,
+                lentCount = lent.size,
+                overdueCount = loans.count { it.status(now) == LoanStatus.OVERDUE },
+                hasLoans = loans.isNotEmpty()
             )
         }.stateIn(
             scope = viewModelScope,

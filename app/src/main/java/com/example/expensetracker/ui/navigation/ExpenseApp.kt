@@ -18,6 +18,8 @@ import com.example.expensetracker.ui.screens.activity.ActivityScreen
 import com.example.expensetracker.ui.screens.add.AddTransactionScreen
 import com.example.expensetracker.ui.screens.home.HomeScreen
 import com.example.expensetracker.ui.screens.insights.InsightsScreen
+import com.example.expensetracker.ui.screens.loans.AddLoanScreen
+import com.example.expensetracker.ui.screens.loans.LoansScreen
 import com.example.expensetracker.ui.screens.stats.StatsScreen
 
 /** Root composable: hosts the bottom-nav scaffold and the navigation graph. */
@@ -59,7 +61,8 @@ fun ExpenseTrackerApp() {
                     onTransactionClick = { id -> navController.navigate(Routes.add(id)) },
                     onSeeStats = { switchTab(Routes.STATS) },
                     onSeeActivity = { switchTab(Routes.ACTIVITY) },
-                    onSeeInsights = { switchTab(Routes.INSIGHTS) }
+                    onSeeInsights = { switchTab(Routes.INSIGHTS) },
+                    onOpenLoans = { navController.navigate(Routes.LOANS) }
                 )
             }
             composable(Routes.ACTIVITY) {
@@ -71,7 +74,18 @@ fun ExpenseTrackerApp() {
                 StatsScreen()
             }
             composable(Routes.INSIGHTS) {
-                InsightsScreen()
+                InsightsScreen(
+                    onOpenLoans = { navController.navigate(Routes.LOANS) }
+                )
+            }
+            composable(Routes.LOANS) {
+                LoansScreen(
+                    onBack = { navController.popBackStack() },
+                    onAddLoan = { navController.navigate(Routes.ADD_LOAN) }
+                )
+            }
+            composable(Routes.ADD_LOAN) {
+                AddLoanScreen(onBack = { navController.popBackStack() })
             }
             composable(
                 route = Routes.ADD_WITH_ID,

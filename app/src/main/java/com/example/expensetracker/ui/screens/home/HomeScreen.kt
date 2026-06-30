@@ -68,6 +68,7 @@ fun HomeScreen(
     onSeeStats: () -> Unit,
     onSeeActivity: () -> Unit,
     onSeeInsights: () -> Unit,
+    onOpenLoans: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -167,6 +168,10 @@ fun HomeScreen(
             }
         }
 
+        if (state.hasLoans) {
+            item { LoansSummaryCard(state, onOpenLoans) }
+        }
+
         item {
             Row(
                 modifier = Modifier
@@ -209,6 +214,55 @@ fun HomeScreen(
             },
             onDismiss = { sheetOpen = false }
         )
+    }
+}
+
+@Composable
+private fun LoansSummaryCard(state: HomeUiState, onClick: () -> Unit) {
+    val overdueColor = if (state.overdueCount > 0) DangerText else PositiveText
+    val overdueNote = if (state.overdueCount > 0) "${state.overdueCount} overdue" else "All on track"
+    SectionCard(modifier = Modifier.clickable(onClick = onClick)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Loans", style = MaterialTheme.typography.titleMedium, color = Ink)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(7.dp)
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(overdueColor)
+                )
+                Text(overdueNote, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = overdueColor)
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            LoanSummaryTile("YOU OWE", state.oweRemaining, "${state.oweCount} active", DangerText, DangerSurface, Modifier.weight(1f))
+            LoanSummaryTile("YOU'RE OWED", state.lentRemaining, "${state.lentCount} active", PositiveText, AccentSurface, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun LoanSummaryTile(
+    label: String,
+    amount: Double,
+    sub: String,
+    labelColor: Color,
+    background: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(background)
+            .padding(horizontal = 14.dp, vertical = 13.dp)
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = labelColor)
+        Text(formatMoney(amount), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = Ink, modifier = Modifier.padding(top = 3.dp))
+        Text(sub, style = MaterialTheme.typography.labelMedium, color = InkFaint, modifier = Modifier.padding(top = 1.dp))
     }
 }
 

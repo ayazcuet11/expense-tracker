@@ -15,7 +15,8 @@ import kotlinx.coroutines.launch
 class ExpenseApp : Application() {
 
     val repository: ExpenseRepository by lazy {
-        ExpenseRepository(ExpenseDatabase.getInstance(this).expenseDao())
+        val db = ExpenseDatabase.getInstance(this)
+        ExpenseRepository(db.expenseDao(), db.loanDao())
     }
 
     override fun onCreate() {
