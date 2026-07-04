@@ -89,12 +89,20 @@ fun AddTransactionScreen(
             modifier = Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Step the size down for long amounts so the widest reachable string
+            // (৳ + 9 digits + '.', per pressDigit's cap) always fits on one line.
+            val amountFontSize = when {
+                state.displayAmount.length <= 9 -> 52.sp
+                state.displayAmount.length == 10 -> 46.sp
+                else -> 42.sp
+            }
             Text(
                 text = state.displayAmount,
-                fontSize = 52.sp,
+                fontSize = amountFontSize,
                 fontWeight = FontWeight.SemiBold,
                 color = Ink,
-                letterSpacing = (-1).sp
+                maxLines = 1,
+                softWrap = false
             )
             Row(
                 modifier = Modifier
