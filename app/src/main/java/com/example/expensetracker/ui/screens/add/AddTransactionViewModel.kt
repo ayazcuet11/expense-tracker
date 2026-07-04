@@ -12,12 +12,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.TimeZone
 
 data class AddUiState(
     val amountText: String = "",
     val category: Category = Category.GROCERY,
     val title: String = "",
     val date: Long = System.currentTimeMillis(),
+    val note: String = "",
     val isEditing: Boolean = false
 ) {
     val amount: Double get() = amountText.toDoubleOrNull() ?: 0.0
@@ -45,6 +48,7 @@ class AddTransactionViewModel(
                         category = e.category,
                         title = e.title,
                         date = e.date,
+                        note = e.note,
                         isEditing = true
                     )
                 }
@@ -75,6 +79,24 @@ class AddTransactionViewModel(
 
     fun onCategoryChange(category: Category) = _uiState.update { it.copy(category = category) }
 
+    /**
+     * [utcMidnightMillis] is the date picker's selection (midnight UTC of the picked day).
+     * Re-anchor it to the same calendar day in the local zone, keeping the current
+     * time-of-day, so day-grouping on Activity/Stats buckets it under the picked day.
+     */
+    fun onDateChange(utcMidnightMillis: Long) = _uiState.update { state ->
+        val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            timeInMillis = utcMidnightMillis
+        }
+        val local = Calendar.getInstance().apply {
+            timeInMillis = state.date
+            set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH))
+        }
+        state.copy(date = local.timeInMillis)
+    }
+
+    fun onNoteChange(text: String) = _uiState.update { it.copy(note = text) }
+
     /** Persists the transaction and invokes [onDone] once written. */
     fun save(onDone: () -> Unit) {
         val state = _uiState.value
@@ -86,7 +108,8 @@ class AddTransactionViewModel(
                 amount = state.amount,
                 category = state.category,
                 type = TransactionType.EXPENSE,
-                date = state.date
+                date = state.date,
+                note = state.note.trim()
             )
             if (state.isEditing) repository.update(expense) else repository.add(expense)
             onDone()

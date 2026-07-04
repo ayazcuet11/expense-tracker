@@ -17,19 +17,32 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,6 +50,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.expensetracker.data.model.Category
 import com.example.expensetracker.ui.AppViewModelProvider
+import com.example.expensetracker.util.formatDateField
+import java.util.Calendar
+import java.util.TimeZone
 import com.example.expensetracker.ui.theme.Accent
 import com.example.expensetracker.ui.theme.Cream
 import com.example.expensetracker.ui.theme.Ink
@@ -45,12 +61,14 @@ import com.example.expensetracker.ui.theme.PillBg
 import com.example.expensetracker.ui.theme.PillBorder
 import com.example.expensetracker.ui.theme.Surface as SurfaceColor
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionScreen(
     onBack: () -> Unit,
     viewModel: AddTransactionViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var showDatePicker by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -123,6 +141,58 @@ fun AddTransactionScreen(
             }
         }
 
+        // Date + details fields.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 18.dp, end = 18.dp, top = 4.dp, bottom = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(100.dp))
+                    .background(PillBg)
+                    .border(1.dp, PillBorder, RoundedCornerShape(100.dp))
+                    .clickable { showDatePicker = true }
+                    .padding(horizontal = 13.dp, vertical = 9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    Icons.Filled.DateRange,
+                    contentDescription = "Pick date",
+                    tint = Ink,
+                    modifier = Modifier.size(15.dp)
+                )
+                Text(formatDateField(state.date), style = MaterialTheme.typography.labelLarge, color = Ink)
+            }
+            BasicTextField(
+                value = state.note,
+                onValueChange = viewModel::onNoteChange,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                textStyle = MaterialTheme.typography.labelLarge.copy(color = Ink),
+                cursorBrush = SolidColor(Ink),
+                modifier = Modifier.weight(1f),
+                decorationBox = { inner ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(PillBg)
+                            .border(1.dp, PillBorder, RoundedCornerShape(100.dp))
+                            .padding(horizontal = 13.dp, vertical = 9.dp)
+                    ) {
+                        if (state.note.isEmpty()) {
+                            Text("Add details…", style = MaterialTheme.typography.labelLarge, color = InkMuted)
+                        }
+                        inner()
+                    }
+                }
+            )
+        }
+
         // Category grid.
         LazyVerticalGrid(
             columns = GridCells.Fixed(4),
@@ -192,6 +262,39 @@ fun AddTransactionScreen(
                     color = Color.White
                 )
             }
+        }
+    }
+
+    if (showDatePicker) {
+        // The picker works in UTC-midnight millis; seed it from the local calendar day
+        // so the highlighted day matches what the pill shows regardless of zone offset.
+        val utcSeed = remember(state.date) {
+            val local = Calendar.getInstance().apply { timeInMillis = state.date }
+            Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                clear()
+                set(
+                    local.get(Calendar.YEAR),
+                    local.get(Calendar.MONTH),
+                    local.get(Calendar.DAY_OF_MONTH)
+                )
+            }.timeInMillis
+        }
+        val pickerState = rememberDatePickerState(initialSelectedDateMillis = utcSeed)
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pickerState.selectedDateMillis?.let(viewModel::onDateChange)
+                        showDatePicker = false
+                    }
+                ) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+            }
+        ) {
+            DatePicker(state = pickerState)
         }
     }
 }

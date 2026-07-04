@@ -44,6 +44,15 @@ fun formatDayLabel(epochMillis: Long): String {
     }
 }
 
+/** Date-field label: Today / Yesterday / "Jun 24", with the year appended for other years. */
+fun formatDateField(epochMillis: Long): String {
+    val cal = Calendar.getInstance().apply { timeInMillis = epochMillis }
+    val now = Calendar.getInstance()
+    val base = formatDayLabel(epochMillis)
+    return if (cal.get(Calendar.YEAR) == now.get(Calendar.YEAR)) base
+    else "$base, ${cal.get(Calendar.YEAR)}"
+}
+
 /** Short clock time, e.g. "2:30 PM". */
 fun formatTime(epochMillis: Long): String {
     val cal = Calendar.getInstance().apply { timeInMillis = epochMillis }
