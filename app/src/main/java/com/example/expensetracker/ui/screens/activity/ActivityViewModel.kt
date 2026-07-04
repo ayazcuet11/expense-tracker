@@ -36,7 +36,7 @@ class ActivityViewModel(repository: ExpenseRepository) : ViewModel() {
                 .map { (label, items) ->
                     DayGroup(
                         dayLabel = label,
-                        dayTotal = items.sumOf { it.amount },
+                        dayTotal = items.sumOf { it.signedAmount },
                         transactions = items
                     )
                 }

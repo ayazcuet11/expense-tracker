@@ -17,10 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.expensetracker.data.model.Expense
+import com.example.expensetracker.data.model.TransactionType
 import com.example.expensetracker.ui.theme.Divider
 import com.example.expensetracker.ui.theme.Ink
 import com.example.expensetracker.ui.theme.InkFaint
+import com.example.expensetracker.ui.theme.PositiveText
 import com.example.expensetracker.util.formatExpense
+import com.example.expensetracker.util.formatMoney
 
 /** A single transaction row: monogram badge, category + note, and the expense amount. */
 @Composable
@@ -60,10 +63,11 @@ fun TransactionItem(
                 }
             }
             Spacer(Modifier.width(8.dp))
+            val isIncome = expense.type == TransactionType.INCOME
             Text(
-                text = formatExpense(expense.amount),
+                text = if (isIncome) "+" + formatMoney(expense.amount) else formatExpense(expense.amount),
                 style = MaterialTheme.typography.titleSmall,
-                color = Ink
+                color = if (isIncome) PositiveText else Ink
             )
         }
         if (showDivider) {

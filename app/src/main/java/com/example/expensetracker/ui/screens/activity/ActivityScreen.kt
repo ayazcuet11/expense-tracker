@@ -27,9 +27,8 @@ import com.example.expensetracker.ui.components.RangeSheet
 import com.example.expensetracker.ui.components.SectionCard
 import com.example.expensetracker.ui.components.TransactionItem
 import com.example.expensetracker.ui.theme.Ink
-import com.example.expensetracker.ui.theme.InkFaint
 import com.example.expensetracker.ui.theme.InkMuted
-import com.example.expensetracker.util.formatMoney
+import com.example.expensetracker.util.formatSignedMoney
 
 @Composable
 fun ActivityScreen(
@@ -70,7 +69,7 @@ fun ActivityScreen(
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Text(group.dayLabel, style = MaterialTheme.typography.labelLarge, color = InkMuted)
-                        Text(formatMoney(group.dayTotal), style = MaterialTheme.typography.labelLarge, color = InkFaint)
+                        Text(formatSignedMoney(group.dayTotal), style = MaterialTheme.typography.labelLarge, color = InkMuted)
                     }
                 }
                 item(key = "c-${group.dayLabel}") {

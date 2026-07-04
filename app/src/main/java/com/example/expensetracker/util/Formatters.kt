@@ -3,6 +3,7 @@ package com.example.expensetracker.util
 import java.text.NumberFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.roundToLong
 
 private val groupedFormat: NumberFormat = NumberFormat.getIntegerInstance(Locale.US)
@@ -12,6 +13,13 @@ fun formatMoney(amount: Double): String = "৳" + groupedFormat.format(amount.ro
 
 /** Expense display with a leading minus, e.g. "-$540". */
 fun formatExpense(amount: Double): String = "-" + formatMoney(amount)
+
+/** Signed display, e.g. "+$1,200" / "-$540"; "$0" (unsigned) when the amount rounds to zero. */
+fun formatSignedMoney(amount: Double): String {
+    val rounded = amount.roundToLong()
+    val sign = if (rounded > 0) "+" else if (rounded < 0) "-" else ""
+    return sign + "৳" + groupedFormat.format(abs(rounded))
+}
 
 /** "$1,250" — alias kept for older call sites. */
 fun formatCurrency(amount: Double): String = formatMoney(amount)
