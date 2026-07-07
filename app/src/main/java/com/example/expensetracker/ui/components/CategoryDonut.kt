@@ -30,6 +30,8 @@ fun CategoryDonut(
     modifier: Modifier = Modifier,
     diameter: Dp = 128.dp
 ) {
+    // Resolved here: theme colors can't be read inside the draw lambda.
+    val trackColor = Track
     Box(modifier = modifier.size(diameter), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.size(diameter)) {
             val strokeWidth = 18.dp.toPx()
@@ -37,7 +39,7 @@ fun CategoryDonut(
             val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
             // Track ring.
             drawArc(
-                color = Track,
+                color = trackColor,
                 startAngle = 0f,
                 sweepAngle = 360f,
                 useCenter = false,

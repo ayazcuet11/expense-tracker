@@ -39,11 +39,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.expensetracker.ui.AppViewModelProvider
 import com.example.expensetracker.ui.components.CategoryBadge
 import com.example.expensetracker.ui.components.CategoryDonut
+import com.example.expensetracker.ui.components.ConfirmDeleteDialog
 import com.example.expensetracker.ui.components.DeltaChip
 import com.example.expensetracker.ui.components.RangePill
 import com.example.expensetracker.ui.components.RangeSheet
 import com.example.expensetracker.ui.components.SectionCard
 import com.example.expensetracker.ui.components.TransactionItem
+import com.example.expensetracker.ui.components.UserDisplayName
 import com.example.expensetracker.ui.screens.common.CategoryStat
 import com.example.expensetracker.ui.screens.common.Movement
 import com.example.expensetracker.ui.theme.AccentSurface
@@ -69,9 +71,11 @@ fun HomeScreen(
     onSeeActivity: () -> Unit,
     onSeeInsights: () -> Unit,
     onOpenLoans: () -> Unit,
+    onAvatarClick: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pendingDelete by viewModel.pendingDelete.collectAsStateWithLifecycle()
     var sheetOpen by remember { mutableStateOf(false) }
 
     LazyColumn(
@@ -90,10 +94,15 @@ fun HomeScreen(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(100.dp))
-                        .background(Ink),
+                        .background(Ink)
+                        .clickable(onClick = onAvatarClick),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("A", color = OnInk, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = UserDisplayName.first().uppercase(),
+                        color = OnInk,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -161,7 +170,8 @@ fun HomeScreen(
                         TransactionItem(
                             expense = expense,
                             onClick = { onTransactionClick(expense.id) },
-                            showDivider = index != state.recent.lastIndex
+                            showDivider = index != state.recent.lastIndex,
+                            onDelete = { viewModel.requestDelete(expense) }
                         )
                     }
                 }
@@ -213,6 +223,15 @@ fun HomeScreen(
                 sheetOpen = false
             },
             onDismiss = { sheetOpen = false }
+        )
+    }
+
+    pendingDelete?.let { expense ->
+        ConfirmDeleteDialog(
+            title = "Delete transaction?",
+            text = "This will remove ${expense.category.label} — ${formatMoney(expense.amount)}.",
+            onConfirm = viewModel::confirmDelete,
+            onDismiss = viewModel::cancelDelete
         )
     }
 }

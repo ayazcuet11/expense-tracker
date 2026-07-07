@@ -24,6 +24,7 @@ object AppViewModelProvider {
         initializer { AddTransactionViewModel(app().repository, createSavedStateHandle()) }
         initializer { LoansViewModel(app().repository) }
         initializer { AddLoanViewModel(app().repository) }
+        initializer { ThemeViewModel(app().themePreferences) }
     }
 }
 

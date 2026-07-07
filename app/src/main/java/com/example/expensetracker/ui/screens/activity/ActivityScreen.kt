@@ -22,12 +22,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.expensetracker.ui.AppViewModelProvider
+import com.example.expensetracker.ui.components.ConfirmDeleteDialog
 import com.example.expensetracker.ui.components.RangePill
 import com.example.expensetracker.ui.components.RangeSheet
 import com.example.expensetracker.ui.components.SectionCard
 import com.example.expensetracker.ui.components.TransactionItem
 import com.example.expensetracker.ui.theme.Ink
 import com.example.expensetracker.ui.theme.InkMuted
+import com.example.expensetracker.util.formatMoney
 import com.example.expensetracker.util.formatSignedMoney
 
 @Composable
@@ -36,6 +38,7 @@ fun ActivityScreen(
     viewModel: ActivityViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pendingDelete by viewModel.pendingDelete.collectAsStateWithLifecycle()
     var sheetOpen by remember { mutableStateOf(false) }
 
     LazyColumn(
@@ -81,7 +84,8 @@ fun ActivityScreen(
                             TransactionItem(
                                 expense = expense,
                                 onClick = { onTransactionClick(expense.id) },
-                                showDivider = index != group.transactions.lastIndex
+                                showDivider = index != group.transactions.lastIndex,
+                                onDelete = { viewModel.requestDelete(expense) }
                             )
                         }
                     }
@@ -98,6 +102,15 @@ fun ActivityScreen(
                 sheetOpen = false
             },
             onDismiss = { sheetOpen = false }
+        )
+    }
+
+    pendingDelete?.let { expense ->
+        ConfirmDeleteDialog(
+            title = "Delete transaction?",
+            text = "This will remove ${expense.category.label} — ${formatMoney(expense.amount)}.",
+            onConfirm = viewModel::confirmDelete,
+            onDismiss = viewModel::cancelDelete
         )
     }
 }

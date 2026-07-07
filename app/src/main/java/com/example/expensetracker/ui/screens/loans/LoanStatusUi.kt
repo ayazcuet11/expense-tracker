@@ -1,5 +1,7 @@
 package com.example.expensetracker.ui.screens.loans
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 import com.example.expensetracker.data.model.LoanStatus
 import com.example.expensetracker.ui.theme.Accent
@@ -14,6 +16,8 @@ import com.example.expensetracker.ui.theme.PillBg
 /** Badge text + background colors for a loan status, shared by the Loans and Insights screens. */
 data class LoanStatusStyle(val text: Color, val background: Color)
 
+@Composable
+@ReadOnlyComposable
 fun LoanStatus.style(): LoanStatusStyle = when (this) {
     LoanStatus.ACTIVE -> LoanStatusStyle(Accent, AccentSurface)
     LoanStatus.DUE_SOON -> LoanStatusStyle(Amber, AmberSurface)

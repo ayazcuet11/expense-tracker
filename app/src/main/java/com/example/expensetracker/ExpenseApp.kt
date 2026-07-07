@@ -2,6 +2,7 @@ package com.example.expensetracker
 
 import android.app.Application
 import com.example.expensetracker.data.local.ExpenseDatabase
+import com.example.expensetracker.data.prefs.ThemePreferenceStore
 import com.example.expensetracker.data.repository.ExpenseRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,8 @@ class ExpenseApp : Application() {
         val db = ExpenseDatabase.getInstance(this)
         ExpenseRepository(db.expenseDao(), db.loanDao())
     }
+
+    val themePreferences: ThemePreferenceStore by lazy { ThemePreferenceStore(this) }
 
     override fun onCreate() {
         super.onCreate()

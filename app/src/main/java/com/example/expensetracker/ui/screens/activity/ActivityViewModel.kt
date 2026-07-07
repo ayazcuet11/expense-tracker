@@ -11,8 +11,10 @@ import com.example.expensetracker.util.formatDayLabel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class ActivityUiState(
     val range: DateRange = DateRange.THIS_MONTH,
@@ -21,7 +23,7 @@ data class ActivityUiState(
     val isEmpty: Boolean = true
 )
 
-class ActivityViewModel(repository: ExpenseRepository) : ViewModel() {
+class ActivityViewModel(private val repository: ExpenseRepository) : ViewModel() {
 
     private val range = MutableStateFlow(DateRange.THIS_MONTH)
 
@@ -54,5 +56,25 @@ class ActivityViewModel(repository: ExpenseRepository) : ViewModel() {
 
     fun setRange(value: DateRange) {
         range.value = value
+    }
+
+    /** Transaction awaiting delete confirmation, or null when no dialog is showing. */
+    private val _pendingDelete = MutableStateFlow<Expense?>(null)
+    val pendingDelete: StateFlow<Expense?> = _pendingDelete.asStateFlow()
+
+    fun requestDelete(expense: Expense) {
+        _pendingDelete.value = expense
+    }
+
+    fun cancelDelete() {
+        _pendingDelete.value = null
+    }
+
+    fun confirmDelete() {
+        val expense = _pendingDelete.value ?: return
+        viewModelScope.launch {
+            repository.delete(expense)
+            _pendingDelete.value = null
+        }
     }
 }
