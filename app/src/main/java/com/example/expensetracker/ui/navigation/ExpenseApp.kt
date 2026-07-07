@@ -1,11 +1,17 @@
 package com.example.expensetracker.ui.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -13,7 +19,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.expensetracker.ui.AppViewModelProvider
+import com.example.expensetracker.ui.ThemeViewModel
 import com.example.expensetracker.ui.components.BottomBar
+import com.example.expensetracker.ui.components.ProfileDrawer
 import com.example.expensetracker.ui.screens.activity.ActivityScreen
 import com.example.expensetracker.ui.screens.add.AddTransactionScreen
 import com.example.expensetracker.ui.screens.home.HomeScreen
@@ -22,7 +31,7 @@ import com.example.expensetracker.ui.screens.loans.AddLoanScreen
 import com.example.expensetracker.ui.screens.loans.LoansScreen
 import com.example.expensetracker.ui.screens.stats.StatsScreen
 
-/** Root composable: hosts the bottom-nav scaffold and the navigation graph. */
+/** Root composable: hosts the bottom-nav scaffold, the navigation graph, and the profile drawer. */
 @Composable
 fun ExpenseTrackerApp() {
     val navController = rememberNavController()
@@ -30,6 +39,11 @@ fun ExpenseTrackerApp() {
     val currentRoute = backStackEntry?.destination?.route
 
     val showBottomBar = currentRoute in Routes.mainRoutes
+
+    // Activity-scoped: the same instance MainActivity collects the theme from.
+    val themeViewModel: ThemeViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    val theme by themeViewModel.theme.collectAsStateWithLifecycle()
+    var profileOpen by rememberSaveable { mutableStateOf(false) }
 
     fun switchTab(route: String) {
         navController.navigate(route) {
@@ -39,66 +53,77 @@ fun ExpenseTrackerApp() {
         }
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
-            if (showBottomBar) {
-                BottomBar(
-                    currentRoute = currentRoute,
-                    onNavigate = ::switchTab,
-                    onAdd = { navController.navigate(Routes.add()) }
-                )
+    Box {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            bottomBar = {
+                if (showBottomBar) {
+                    BottomBar(
+                        currentRoute = currentRoute,
+                        onNavigate = ::switchTab,
+                        onAdd = { navController.navigate(Routes.add()) }
+                    )
+                }
             }
-        }
-    ) { padding ->
-        NavHost(
-            navController = navController,
-            startDestination = Routes.HOME,
-            modifier = Modifier.padding(padding)
-        ) {
-            composable(Routes.HOME) {
-                HomeScreen(
-                    onTransactionClick = { id -> navController.navigate(Routes.add(id)) },
-                    onSeeStats = { switchTab(Routes.STATS) },
-                    onSeeActivity = { switchTab(Routes.ACTIVITY) },
-                    onSeeInsights = { switchTab(Routes.INSIGHTS) },
-                    onOpenLoans = { navController.navigate(Routes.LOANS) }
-                )
-            }
-            composable(Routes.ACTIVITY) {
-                ActivityScreen(
-                    onTransactionClick = { id -> navController.navigate(Routes.add(id)) }
-                )
-            }
-            composable(Routes.STATS) {
-                StatsScreen()
-            }
-            composable(Routes.INSIGHTS) {
-                InsightsScreen(
-                    onOpenLoans = { navController.navigate(Routes.LOANS) }
-                )
-            }
-            composable(Routes.LOANS) {
-                LoansScreen(
-                    onBack = { navController.popBackStack() },
-                    onAddLoan = { navController.navigate(Routes.ADD_LOAN) }
-                )
-            }
-            composable(Routes.ADD_LOAN) {
-                AddLoanScreen(onBack = { navController.popBackStack() })
-            }
-            composable(
-                route = Routes.ADD_WITH_ID,
-                arguments = listOf(
-                    navArgument("id") {
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = null
-                    }
-                )
+        ) { padding ->
+            NavHost(
+                navController = navController,
+                startDestination = Routes.HOME,
+                modifier = Modifier.padding(padding)
             ) {
-                AddTransactionScreen(onBack = { navController.popBackStack() })
+                composable(Routes.HOME) {
+                    HomeScreen(
+                        onTransactionClick = { id -> navController.navigate(Routes.add(id)) },
+                        onSeeStats = { switchTab(Routes.STATS) },
+                        onSeeActivity = { switchTab(Routes.ACTIVITY) },
+                        onSeeInsights = { switchTab(Routes.INSIGHTS) },
+                        onOpenLoans = { navController.navigate(Routes.LOANS) },
+                        onAvatarClick = { profileOpen = true }
+                    )
+                }
+                composable(Routes.ACTIVITY) {
+                    ActivityScreen(
+                        onTransactionClick = { id -> navController.navigate(Routes.add(id)) }
+                    )
+                }
+                composable(Routes.STATS) {
+                    StatsScreen()
+                }
+                composable(Routes.INSIGHTS) {
+                    InsightsScreen(
+                        onOpenLoans = { navController.navigate(Routes.LOANS) }
+                    )
+                }
+                composable(Routes.LOANS) {
+                    LoansScreen(
+                        onBack = { navController.popBackStack() },
+                        onAddLoan = { navController.navigate(Routes.ADD_LOAN) }
+                    )
+                }
+                composable(Routes.ADD_LOAN) {
+                    AddLoanScreen(onBack = { navController.popBackStack() })
+                }
+                composable(
+                    route = Routes.ADD_WITH_ID,
+                    arguments = listOf(
+                        navArgument("id") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        }
+                    )
+                ) {
+                    AddTransactionScreen(onBack = { navController.popBackStack() })
+                }
             }
         }
+
+        // Above the Scaffold so it overlays every screen and the bottom bar.
+        ProfileDrawer(
+            open = profileOpen,
+            activeTheme = theme,
+            onSelectTheme = themeViewModel::setTheme,
+            onDismiss = { profileOpen = false }
+        )
     }
 }

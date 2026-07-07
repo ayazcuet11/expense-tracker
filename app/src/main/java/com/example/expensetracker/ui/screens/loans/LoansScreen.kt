@@ -21,10 +21,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.expensetracker.data.model.LoanDirection
 import com.example.expensetracker.ui.AppViewModelProvider
+import com.example.expensetracker.ui.components.ConfirmDeleteDialog
 import com.example.expensetracker.ui.components.SectionCard
 import com.example.expensetracker.ui.theme.AccentSurface
 import com.example.expensetracker.ui.theme.Cream
@@ -56,6 +60,8 @@ import com.example.expensetracker.util.formatDayLabel
 import com.example.expensetracker.util.formatMoney
 
 /** Coral for "you owe", green for "you're owed". */
+@Composable
+@ReadOnlyComposable
 internal fun directionColor(direction: LoanDirection): Color =
     if (direction == LoanDirection.BORROWED) DangerText else PositiveText
 
@@ -67,6 +73,7 @@ fun LoansScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val paySheet by viewModel.paySheet.collectAsStateWithLifecycle()
+    val pendingDelete by viewModel.pendingDelete.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -107,7 +114,11 @@ fun LoansScreen(
             item { EmptyLoans(state.tab) }
         } else {
             items(state.loans, key = { it.id }) { loan ->
-                LoanCard(loan = loan, onPay = { viewModel.openPayment(loan.id) })
+                LoanCard(
+                    loan = loan,
+                    onPay = { viewModel.openPayment(loan.id) },
+                    onDelete = { viewModel.requestDelete(loan) }
+                )
             }
         }
     }
@@ -120,6 +131,15 @@ fun LoansScreen(
             onFull = viewModel::payFull,
             onSave = viewModel::savePayment,
             onDismiss = viewModel::closePayment
+        )
+    }
+
+    pendingDelete?.let { loan ->
+        ConfirmDeleteDialog(
+            title = "Delete loan?",
+            text = "This will remove the loan with ${loan.person} — ${formatMoney(loan.principal)}.",
+            onConfirm = viewModel::confirmDelete,
+            onDismiss = viewModel::cancelDelete
         )
     }
 }
@@ -230,7 +250,7 @@ private fun LoanTab(text: String, selected: Boolean, modifier: Modifier, onClick
 }
 
 @Composable
-private fun LoanCard(loan: LoanCardUi, onPay: () -> Unit) {
+private fun LoanCard(loan: LoanCardUi, onPay: () -> Unit, onDelete: () -> Unit) {
     val dirColor = directionColor(loan.direction)
     val statusStyle = loan.status.style()
     SectionCard(cornerRadius = 22.dp, contentPadding = PaddingValues(17.dp)) {
@@ -259,6 +279,14 @@ private fun LoanCard(loan: LoanCardUi, onPay: () -> Unit) {
             Column(horizontalAlignment = Alignment.End) {
                 Text(formatMoney(loan.remaining), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = dirColor)
                 Text("remaining", style = MaterialTheme.typography.labelSmall, color = InkFaint)
+            }
+            IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    Icons.Outlined.Delete,
+                    contentDescription = "Delete loan",
+                    tint = InkFaint,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
 

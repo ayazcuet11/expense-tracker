@@ -128,6 +128,26 @@ class LoansViewModel(private val repository: ExpenseRepository) : ViewModel() {
         }
     }
 
+    /** Loan awaiting delete confirmation, or null when no dialog is showing. */
+    private val _pendingDelete = MutableStateFlow<LoanCardUi?>(null)
+    val pendingDelete: StateFlow<LoanCardUi?> = _pendingDelete.asStateFlow()
+
+    fun requestDelete(loan: LoanCardUi) {
+        _pendingDelete.value = loan
+    }
+
+    fun cancelDelete() {
+        _pendingDelete.value = null
+    }
+
+    fun confirmDelete() {
+        val card = _pendingDelete.value ?: return
+        viewModelScope.launch {
+            repository.getLoan(card.id)?.let { repository.deleteLoan(it) }
+            _pendingDelete.value = null
+        }
+    }
+
     private fun Loan.toCardUi(now: Long): LoanCardUi = LoanCardUi(
         id = id,
         person = person,

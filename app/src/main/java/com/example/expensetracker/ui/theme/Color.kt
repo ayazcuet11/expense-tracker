@@ -1,33 +1,38 @@
 package com.example.expensetracker.ui.theme
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 
-// Warm, earthy palette from the design: cream surfaces, ink text, a muted green accent.
-val Accent = Color(0xFF2F7A57)
-val AccentDark = Color(0xFF276146)
-val AccentSurface = Color(0xFFE8F2EC)
+// Theme-aware accessors: each resolves against the active AppColors palette, so every existing
+// call site restyles automatically when the theme switches. They only work inside composition —
+// a non-composable consumer must take the colors as parameters instead (see LoanStatusUi).
+
+val Accent: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.accent
+val AccentDark: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.accentDark
+val AccentSurface: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.accentSurface
 
 // Neutrals
-val Ink = Color(0xFF1B1A17)        // primary text + dark cards
-val InkSoft = Color(0xFF3A372F)
-val InkMuted = Color(0xFF736E61)   // secondary text
-val InkFaint = Color(0xFFA39C8C)   // tertiary / captions
-val Cream = Color(0xFFFBF9F4)      // screen background
-val Surface = Color(0xFFFFFFFF)    // cards
-val Outline = Color(0xFFEFE9DD)    // card borders
-val Divider = Color(0xFFF3EEE4)    // row separators
-val Track = Color(0xFFF1ECE2)      // progress-bar tracks
-val PillBg = Color(0xFFF2EDE3)     // pill / chip background
-val PillBorder = Color(0xFFE7E0D2)
+val Ink: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.ink            // primary text + dark cards
+val InkSoft: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.inkSoft
+val InkMuted: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.inkMuted  // secondary text
+val InkFaint: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.inkFaint  // tertiary / captions
+val Cream: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.cream        // screen background
+val Surface: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.surface    // cards
+val Outline: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.outline    // card borders
+val Divider: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.divider    // row separators
+val Track: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.track        // progress-bar tracks
+val PillBg: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.pillBg      // pill / chip background
+val PillBorder: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.pillBorder
 
 // Semantic deltas
-val DangerText = Color(0xFFC7503B)
-val DangerSurface = Color(0xFFFBEEEA)
-val PositiveText = Color(0xFF3E8E6A)
-val PositiveSurface = Color(0xFFE8F2EC)
-val Amber = Color(0xFFB58A3C)
-val AmberSurface = Color(0xFFF6EEDD)
+val DangerText: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.dangerText
+val DangerSurface: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.dangerSurface
+val PositiveText: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.positiveText
+val PositiveSurface: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.positiveSurface
+val Amber: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.amber
+val AmberSurface: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.amberSurface
 
-// Text on dark (ink) cards
-val OnInk = Color(0xFFFBF9F4)
-val OnInkMuted = Color(0xFFA8A293)
+// Text on ink cards
+val OnInk: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.onInk
+val OnInkMuted: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.onInkMuted
